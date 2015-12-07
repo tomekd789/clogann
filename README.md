@@ -1,5 +1,7 @@
 # clogann
 
+** This is yet a stub, the actual engine is under construction **
+
 CloGANN: Clojure abstraction for breeding (Recurrent) Neural Networks (NN) with the Genetic Algorithm (GA).
 To be used for indirect programming by breeding neural networks capable of resolving user-defined problems.
 
@@ -12,17 +14,15 @@ No installation is needed. The project requires two files to work: core.clj, and
 
 ## Usage
 
-** This is yet a stub, the actual engine is under construction **
-
 Download at least the two files mentioned above.
-
+if you plan to play with the ready example provided, create a folder named 'factorization'.
 Read the original 'population.clj' file for details.
 
-The included population.clj includes a simple problem definition as a usage example.
-You will want to replace it by self-defined values by editing the file.
+The population.clj file contains a simple problem definition as a usage example.
+You need to replace it by self-defined values by editing the file.
 The core.clj is not expected to be altered under normal circumstances.
 
-THen run core.clj in the way you prefer (REPL, compiled to the Java bytecode, etc.).
+Then run core.clj in the way you prefer (REPL, compiled to the Java bytecode, etc.).
 
 ## License
 

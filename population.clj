@@ -1,48 +1,48 @@
 ; CloGANN: Clojure abstraction for breeding (Recurrent) Neural Networks (NN) with the Genetic Algorithm (GA).
 ;
 ;ABOUT THIS PARAMETER FILE
-;The purpose of this file is fourfold: It contains a concise description of the project; Together with
-;the core.clj file this is all what is needed for the program to run; It contains all necessary user-defined
-;paramaters; It creates own copies iteractively with updated values, hence becoming the program output.
+; The purpose of this file is fourfold: It contains a concise description of the project; Together with
+; the core.clj file this is all what is needed for the program to run; It contains all necessary user-defined
+; paramaters; It creates own copies iteractively with updated values, hence becoming the program output.
 ;
 ;GENERAL DESCRIPTION
-;This is a multi-layer abstraction for breeding recurrent neural networks capable of solving user-defined
-;problems with a genetic algorithm. It can be treated as some kind of indirect programming, i.e. breeding
-;networks as programs with heuristic methods.
-;Here go the layers, bottom up:
+; This is a multi-layer abstraction for breeding recurrent neural networks capable of solving user-defined
+; problems with a genetic algorithm. It can be treated as some kind of indirect programming, i.e. breeding
+; networks as programs with heuristic methods.
+; Here go the layers, bottom up:
 ;A NEURON
-;A logical entity containing a vector of constant weights. It works by taking inputs from other neurons,
-;multiplying them by the weights respectively, summing the multiplies, and returning the result as its output.
-;If the number is negative, the returned output is set to zero.
+; A logical entity containing a vector of constant weights. It works by taking inputs from other neurons,
+; multiplying them by the weights respectively, summing the multiplies, and returning the result as its output.
+; If the number is negative, the returned output is set to zero.
 ;A NEURAL NETWORK
-;Also named an /organism/, or a just /network/, this is a set of 'network-size' neurons (the 'network-size'
-;parameter, as well as others mentioned here, are defined in this file in the bottom section). They are all
-;connected to one another, output to input, hence the network is Recurrent, or RNN
-;( https://en.wikipedia.org/wiki/Recurrent_neural_network ). All neurons trigger together, so we can talk
-;about a network state at a given time. Algebraically, and by implementation, this is an iterative multiplication
-;of a network state vector (transposed) by a square array of weights (row-oriented), and substituting
-;all negative values by zeroes subsequently.
+; Also named an /organism/, or a just /network/, this is a set of 'network-size' neurons (the 'network-size'
+; parameter, as well as others mentioned here, are defined in this file in the bottom section). They are all
+; connected to one another, output to input, hence the network is Recurrent, or RNN
+; ( https://en.wikipedia.org/wiki/Recurrent_neural_network ). All neurons trigger together, so we can talk
+; about a network state at a given time. Algebraically, and by implementation, this is an iterative multiplication
+; of a network state vector (transposed) by a square array of weights (row-oriented), and substituting
+; all negative values by zeroes subsequently.
 ;A SAMPLE
-;A network can be also seen as a function processing its state vector iteractively, in the way described above.
-;At the beginning, and then every 'iterations-per-input', the state vector is additionaly processed by
-;a user-defined function for providing input to the network. It just takes and returns the state vector, altered.
-;It is up to the user to decide how many neurons will be impacted, and how many times. Conceputally, this is
-;treating some neurons as input, i.e. disregarding network outputs for them and providing the user defined
-;value instead. Similarly, the state vector is then processed by another user-defined function to interpret
-;the network output. It is expected to return a boolean flag interpreted as a stop signal, and an evaluation
-;value. The described network run until stop is called a /sample/, and the return value is a /partial evaluation/.
+; A network can be also seen as a function processing its state vector iteractively, in the way described above.
+; At the beginning, and then every 'iterations-per-input', the state vector is additionaly processed by
+; a user-defined function for providing input to the network. It just takes and returns the state vector, altered.
+; It is up to the user to decide how many neurons will be impacted, and how many times. Conceputally, this is
+; treating some neurons as input, i.e. disregarding network outputs for them and providing the user defined
+; value instead. Similarly, the state vector is then processed by another user-defined function to interpret
+; the network output. It is expected to return a boolean flag interpreted as a stop signal, and an evaluation
+; value. The described network run until stop is called a /sample/, and the return value is a /partial evaluation/.
 ;NETWORK EVALUATION
-;A network can be sampled many times, returning many partial evaluations saved as a list. This is also controlled
-;by a user-defined 'take-next-sample function capable of providing a higher level stop signal (this is not to be
-;confused with the stop signal for a sample - this time its for a full, multiple-samples network evaluation).
-;Then the partial evaluations vector is taken as the argument for the user-defined 'calculate-final-evaluation'
-;function, returning a single value taken as the /network evaluation/.
+; A network can be sampled many times, returning many partial evaluations saved as a list. This is also controlled
+; by a user-defined 'take-next-sample function capable of providing a higher level stop signal (this is not to be
+; confused with the stop signal for a sample - this time its for a full, multiple-samples network evaluation).
+; Then the partial evaluations vector is taken as the argument for the user-defined 'calculate-final-evaluation'
+; function, returning a single value taken as the /network evaluation/.
 ;A POPULATION
 ; This is a population-size vector of organisms paired with their evaluations.
 ; If 'initialize-population' is 'true', the 'population' definition is disregarded, and a new 0.0-filled
 ; population is created, with evaluations initially set to 'default-null-eval'.
 ;THE GENETIC ALGORITHM
-;Conceptually, core.clj works as follows:
+; Conceptually, core.clj works as follows:
 ; - A new pool of organisms is created from the existing one,
 ; - The pool is processed by a cross-over, with 'crossover-probability',
 ; - All its weights are then subject to a mutation, with (/ 1 mutation-probability-inverse) probability;
@@ -64,17 +64,18 @@
 ; is more or less entirely replaced over such a life span.
 ;
 ;YET ABOUT THIS FILE
-;core.clj looks for the file, named 'population.clj', and starts by executing it using 'load-file'. The original
-;population file is not referenced further, and it can be removed or altered e.g. for another processing.
-;core.clj then works iteratively by saving subsequent copies of the population file, with updated content.
-;The 'population.clj' file consists of two sections:
-;- The first one goes from the top since the ";;; The mutable part" line, and is copied without any changes.
-;  It must contain necessary definitions for core.clj.
-;- The second part is a snapshot dump of all parameters (some of them alter), and the population itself
+; core.clj looks for the file, named 'population.clj', and starts by executing it using 'load-file'. The original
+; population file is not referenced further, and it can be removed or altered e.g. for another processing.
+; core.clj then works iteratively by saving subsequent copies of the population file, with updated content,
+; in the folder defined by the user.
+; The 'population.clj' file consists of two sections:
+; - The first one goes from the top since the '';;; The mutable part'' line, and is copied without any changes.
+;   It must contain necessary definitions for core.clj.
+; - The second part is a snapshot dump of all parameters (some of them alter), and the population itself
 
 
 
-; DEFINITIONS
+;DEFINITIONS
 ; For educational purposes this file defines a working example, breeding a network capable of factorizing
 ; natural numbers, i.e. for a given k it returns m, n such that k = m*n. m and n do not have to be prime numbers.
 
@@ -150,7 +151,8 @@
 (def params
 {
 :population-save-interval '(10 "New file is saved and evals displayed every % generation; integer")
-:mutation-probability-inverse '(12 "Self-adjustable. P. of weight modification when a new org is created; integer")
+:population-save-folder '("factorization/" "New files are saved to this folder")
+:mutation-probability-inverse '(12 "Self-adjustable. P of a weight modification when a new org is created; integer")
 :crossover-probability '(0.4 "...when a new organism is created; double")
 :initialize-population '(true  "If true, a new, zeroed population will be created; boolean")
 :default-null-eval '(0.0 "Initial evaluation taken if initialize-population; double")

@@ -1,9 +1,5 @@
-; CloGANN: Clojure abstraction for breeding (Recurrent) Neural Networks (NN) with the Genetic Algorithm (GA).
 ; See the 'population.clj' file for documentation.
 ; Tomasz Dryjanski ( https://github.com/tomekd789 )
-
-; unsolved:
-; - 'polirythmic' breeding
 
 (ns clogann.core
   (:gen-class))
@@ -15,10 +11,11 @@
 (defn load-population
 "Reads the population from file, and defines parameters"
 []
-  (load-file
-    "population.clj")
+  (load-file "population.clj")
   (def population-save-interval
     (first (:population-save-interval params)))
+  (def population-save-folder
+    (first (:population-save-folder params)))
   (def mutation-probability-inverse
     (first (:mutation-probability-inverse params)))
   (def crossover-probability
@@ -40,7 +37,7 @@
       (if (= p 0)
         (.availableProcessors (Runtime/getRuntime))
         p)))
-  (def popul
+  (def initial-population
     (if initialize-population
       ; Population filled with 0.0s, evaluations set to default-null-eval
       (into [] (take population-size (repeat [(into [] (take network-size
@@ -51,41 +48,95 @@
 
 (defn save-new-population-file
 "Saves updated population file after some breeding, with altered params"
-  [mutation-probability-inverse, generation, parallelism, popul]
-  (let [fname (str "population_" generation ".clj")
+[mutation-probability-inverse generation population]
+(let [fname (str population-save-folder "population_" generation ".clj")
         write #(spit fname % :append true)]
 [(spit fname "") ; Touch file
  (write immutable-file-part)
  (write "\n\n;;; The mutable part\n")
-; The subsequent body can be expressed more concisely using e.g. Pretty Print.
-; It was consciously avoided to reduce dependencies, it's up to the user to do any refactoring.
+ ; The subsequent body can be expressed more concisely using e.g. Pretty Print.
+ ; It was consciously avoided to reduce dependencies, it's up to the user to do any refactoring.
  (write "(def params\n{\n")
- ; There is a low-priority plan to replace the following by a Pretty Print invocation
- (write ":population-save-interval '(10 \"New file is saved and evals displayed every % generation; integer\")\n")
- (write (str ":mutation-probability-inverse '(" mutation-probability-inverse " \"Self-adjustable. P. of weight modification when a new org is created; integer\")\n"))
- (write ":crossover-probability '(0.4 \"...when a new org is created; double\")\n")
+ (write (str ":population-save-interval '(" population-save-interval
+             " \"New file is saved and evals displayed every % generation; integer\")\n"))
+ (write (str ":population-save-folder '(" population-save-folder
+             " \"New files are saved to this folder\")\n"))
+ (write (str ":mutation-probability-inverse '(" mutation-probability-inverse
+    " \"Self-adjustable. P. of a weight modification when a new org is created; integer\")\n"))
+ (write (str ":crossover-probability '(" crossover-probability
+             " \"...when a new org is created; double\")\n"))
  (write ":initialize-population '(false \"If true, a new, zeroed population will be created; boolean\")\n")
- (write ":default-null-eval '(0.0 \"Initial evaluation taken if initialize-population; double\")\n")
- (write ":iterations-per-input '(1 \"Network cycles per each value provided; integer\")\n")
- (write ":population-size '(50 \"The population size; integer\")\n")
- (write ":network-size '(12 \"The network size; integer\")\n")
+ (write (str ":default-null-eval '(" default-null-eval
+             " \"Initial evaluation taken if initialize-population; double\")\n"))
+ (write (str ":iterations-per-input '(" iterations-per-input
+             " \"Network cycles per each value provided; integer\")\n"))
+ (write (str ":population-size '(" population-size
+             " \"The population size; integer\")\n"))
+ (write (str ":network-size '(" network-size " \"The network size; integer\")\n"))
  (write (str ":generation '(" generation " \"Current generation; integer\")\n"))
- (write (str ":parallelism '(" parallelism " \"# of organisms evaluated in parallel - if 0 then # of the JVM cores; integer\")\n"))
+ (write (str ":parallelism '(" parallelism
+    " \"# of organisms evaluated in parallel - if 0 then # of the JVM cores; integer\")\n"))
  (write "})\n\n")
  (write "; The population itself; made of pairs: evaluation, and an organism\n")
- (write (str "(def population " popul ")"))]))
+ (write (str "(def population " population ")"))]))
 
-(defn print-top-5-evaluates []
-  (clojure.string/join ";  " (take 5 (map last popul)))
-)
+(defn print-top-5-evaluations [generation population]
+"Print the generation number and  top 5 evaluations in the population"
+; Leaving up to the user to add e.g. (format "%.3f" %) in between
+(str "Generation: " generation "; Top 5 evaluations: "
+     (clojure.string/join ", " (take 5 (map last population)))))
 
-(defn mul-vector-array"Multiply a transposed vector by a row-arranged array"
+(defn mul-vector-array
+"Multiply a transposed vector by a row-arranged array"
 [vector-transposed array-by-rows]
 (into [] (map
           #(reduce + (map * vector-transposed %)) 
           array-by-rows)))
 
+(defn network-iteration
+"Change the state vector by a single network iteration"
+[state-vector network]
+(into [] (map #(if (< % 0) 0.0 %) (mul-vector-array state-vector network))))
+
+(defn breed-new-population
+"Takes a population, and breeds a new one; also returns how many new organisms appeared"
+[population]
+[population 0]) ; TBC
+
+(def pmi-update-frequency 10) ; Mutation probability will be updated every % generations
+
+(defn the-main-loop
+"The main clogann loop, called once from main, infinite"
+; It breeds next populations iteratively.
+; Every population-save-interval the population is saved to a new file.
+; Every pmi-upgrade-frequency the mutation probability is upgraded,
+; based on the number of new organisms entering the population in the meantime.
+[]
+(loop [current-generation generation
+       current-pmi mutation-probability-inverse
+       current-population initial-population
+       accu-new-org-count 0]
+  (if (= 0 (mod current-generation population-save-interval)) ; i.e. every save-interval
+    (do
+      (save-new-population-file current-pmi current-generation current-population)
+      (print-top-5-evaluations current-generation current-population)))
+  (let [[new-population new-org-count] (breed-new-population current-population)
+        update-pmi? (= 0 (mod current-generation pmi-update-frequency))]
+    (recur
+     (inc current-generation)
+     (if update-pmi? ; with pmi-upgrade-frequency,
+       (if (> accu-new-org-count population-size) ; if too many new organisms created in the meantime,
+         ; increase mutation probability, but not above 1/5:
+         ((if (> current-pmi 5) (dec current-pmi) current-pmi))
+         (inc current-pmi)) ; otherwise decrease the mutation probability (i.e. inc its inverse)
+       current-pmi)
+     new-population ; take the new population for the next main loop iteration
+     (if update-pmi? ; if the accu-new-org-count has been "consumed" above, start building a new one
+       new-org-count
+       (+ new-org-count accu-new-org-count))))))
+
 (defn -main
 "The main function"
 [& args]
-(load-population))
+(load-population)
+(the-main-loop))
