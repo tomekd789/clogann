@@ -15,7 +15,7 @@ No installation is needed. The project requires two files to work: core.clj, and
 ## Usage
 
 Download at least the two files mentioned above.
-if you plan to play with the ready example provided, create a folder named 'factorization'.
+If you plan to play with the ready example provided, create a folder named 'factorization'.
 Read the original 'population.clj' file for details.
 
 The population.clj file contains a simple problem definition as a usage example.

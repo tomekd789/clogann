@@ -15,7 +15,7 @@
 ; multiplying them by the weights respectively, summing the multiplies, and returning the result as its output.
 ; If the number is negative, the returned output is set to zero.
 ;A NEURAL NETWORK
-; Also named an /organism/, or a just /network/, this is a set of 'network-size' neurons (the 'network-size'
+; Also named an /organism/, or a just a /network/, this is a set of 'network-size' neurons (the 'network-size'
 ; parameter, as well as others mentioned here, are defined in this file in the bottom section). They are all
 ; connected to one another, output to input, hence the network is Recurrent, or RNN
 ; ( https://en.wikipedia.org/wiki/Recurrent_neural_network ). All neurons trigger together, so we can talk
@@ -33,12 +33,12 @@
 ; value. The described network run until stop is called a /sample/, and the return value is a /partial evaluation/.
 ;NETWORK EVALUATION
 ; A network can be sampled many times, returning many partial evaluations saved as a list. This is also controlled
-; by a user-defined 'take-next-sample function capable of providing a higher level stop signal (this is not to be
+; by a user-defined 'take-next-sample' function capable of providing a higher level stop signal (this is not to be
 ; confused with the stop signal for a sample - this time its for a full, multiple-samples network evaluation).
 ; Then the partial evaluations vector is taken as the argument for the user-defined 'calculate-final-evaluation'
 ; function, returning a single value taken as the /network evaluation/.
 ;A POPULATION
-; This is a population-size vector of organisms paired with their evaluations.
+; A population-size vector of organisms paired with their evaluations.
 ; If 'initialize-population' is 'true', the 'population' definition is disregarded, and a new 0.0-filled
 ; population is created, with evaluations initially set to 'default-null-eval'.
 ;THE GENETIC ALGORITHM
@@ -48,7 +48,8 @@
 ; - All its weights are then subject to a mutation, with (/ 1 mutation-probability-inverse) probability;
 ;   a mutation can be #(inc %), #(dec %), #(/ % 2), or #(* % 2) - all equally probable,
 ; - All organisms in the new pool are then evaluated, with use of 'pmap' parallelism. The degree
-;   of parallelism is defined as 'parallelism'. If 0 is provided then the JVM CPU count is taken,
+;   of parallelism is defined as 'parallelism' (so it's mildly recommended to make the 'population-count'
+;   a multiply of the 'parallelism' for optimal performance). If 0 is provided then the JVM CPU count is taken,
 ;   and then written explicitly to subsequent output files,
 ; - The extended population is then sorted by its evaluations, descending (i.e. to maximize the
 ;   evaluation result), counter-conservative (i.e. new organisms are preferred), and 'population-size'
@@ -60,7 +61,8 @@
 ; introduced by core.clj. User needs to be aware of usage of 'pmap', e.g. no interaction
 ; is expected to happen between organisms when they are evaluated, and one needs to be careful
 ; with any side effects, resulting e.g. in locks.
-; The 'mutation-probability-inverse' is updated every 10-th generation so that the population
+; The 'mutation-probability-inverse' is updated every 'pmi-update-frequency' generation
+; (this parameter is defined, exceptionally, in core.clj, and originally set to 10) so that the population
 ; is more or less entirely replaced over such a life span.
 ;
 ;YET ABOUT THIS FILE
@@ -83,7 +85,7 @@
 (def initial-vector [100]) ; In this particular example the vector contains just a decrementing counter
 
 ; 'take-next-sample': essentially it transforms the initial vector subsequently, also
-; returing values necessary for a sample evaluation to work.
+; returning values necessary for a sample evaluation to work.
 ; Its parameter is a user-defined vector; initially the 'initial-vector' is taken.
 ; The function has to return a vector consisted of the following:
 ; - A boolean flag value; If true, samples generation stops, and final evaluation is calculated.
@@ -163,5 +165,5 @@
 :parallelism '(4 "# of organisms evaluated in parallel - if 0 then # of the JVM cores; integer")
 })
 
-; The population itself; made of pairs: evaluation, and an organism
+; The population itself; made of vectors [organism evaluation]
 (def population [])

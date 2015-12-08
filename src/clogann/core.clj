@@ -77,7 +77,7 @@
  (write (str ":parallelism '(" parallelism
     " \"# of organisms evaluated in parallel - if 0 then # of the JVM cores; integer\")\n"))
  (write "})\n\n")
- (write "; The population itself; made of pairs: evaluation, and an organism\n")
+ (write "; The population itself; made of vectors [organism evaluation]\n")
  (write (str "(def population " population ")"))]))
 
 (defn print-top-5-evaluations [generation population]
@@ -96,12 +96,30 @@
 (defn network-iteration
 "Change the state vector by a single network iteration"
 [state-vector network]
-(into [] (map #(if (< % 0) 0.0 %) (mul-vector-array state-vector network))))
+(into [] (map #(max % 0.0) (mul-vector-array state-vector network))))
+
+;TBC: sample evaluation here
+
+(defn evaluate-network
+"Evaluates a network and returns it with the updated evaluation"
+[organism] (assoc organism (dec (count organism)) default-null-eval))
+;TBC
+
+(defn calculate-evaluations
+"Calculate evaluations for a given population"
+([population] (calculate-evaluations [] population))
+([processed-vector remaining-vector]
+ (if (empty? remaining-vector)
+   processed-vector
+   (recur (concat processed-vector
+                  (pmap evaluate-network (take parallelism remaining-vector)))
+          (drop parallelism remaining-vector)))))
 
 (defn breed-new-population
-"Takes a population, and breeds a new one; also returns how many new organisms appeared"
-[population]
-[population 0]) ; TBC
+  "Takes a population, and breeds a new one; also informs about new organisms count"
+  [population pmi]
+  [population 0])
+;TBC
 
 (def pmi-update-frequency 10) ; Mutation probability will be updated every % generations
 
@@ -120,15 +138,14 @@
     (do
       (save-new-population-file current-pmi current-generation current-population)
       (print-top-5-evaluations current-generation current-population)))
-  (let [[new-population new-org-count] (breed-new-population current-population)
+  (let [[new-population new-org-count] (breed-new-population current-population current-pmi)
         update-pmi? (= 0 (mod current-generation pmi-update-frequency))]
     (recur
      (inc current-generation)
      (if update-pmi? ; with pmi-upgrade-frequency,
        (if (> accu-new-org-count population-size) ; if too many new organisms created in the meantime,
-         ; increase mutation probability, but not above 1/5:
-         ((if (> current-pmi 5) (dec current-pmi) current-pmi))
-         (inc current-pmi)) ; otherwise decrease the mutation probability (i.e. inc its inverse)
+         (max (dec current-pmi) 5) ; increase mutation probability (i.e. dec inverse), but not above 1/5
+         (inc current-pmi)) ; otherwise decrease the mutation probability (i.e. inc inverse)
        current-pmi)
      new-population ; take the new population for the next main loop iteration
      (if update-pmi? ; if the accu-new-org-count has been "consumed" above, start building a new one
