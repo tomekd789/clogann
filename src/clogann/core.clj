@@ -80,12 +80,6 @@
  (write "; The population itself; made of vectors [organism evaluation]\n")
  (write (str "(def population " population ")"))]))
 
-(defn print-top-5-evaluations [generation population]
-"Print the generation number and  top 5 evaluations in the population"
-; Leaving up to the user to add e.g. (format "%.3f" %) in between
-(str "Generation: " generation "; Top 5 evaluations: "
-     (clojure.string/join ", " (take 5 (map last population)))))
-
 (defn mul-vector-array
 "Multiply a transposed vector by a row-arranged array"
 [vector-transposed array-by-rows]
@@ -115,13 +109,44 @@
                   (pmap evaluate-network (take parallelism remaining-vector)))
           (drop parallelism remaining-vector)))))
 
+(defn crossover
+"Applies crossing-over to a population"
+[population]
+population)
+;TBC
+
+(defn mutate
+"Enters random mutations to a population"
+[population pmi]
+population
+)
+;TBC
+
 (defn breed-new-population
   "Takes a population, and breeds a new one; also informs about new organisms count"
   [population pmi]
-  [population 0])
-;TBC
+  (let [unsorted-children (calculate-evaluations (mutate (crossover population) pmi))
+        new-population (take population-size (sort-by last > (concat unsorted-children population)))
+        ; as per the documentation, clojure.core/sort is 'conservative', or 'stable'
+        ; i.e. children go first if evaluations are equal
+        least-new-evaluation (last (last new-population))
+        count-those-with-least-eval
+          (fn [population] (count (filter #(= (last %) least-new-evaluation) population)))]
+    [new-population
+     (+ (count (filter #(> (last %) least-new-evaluation) unsorted-children))
+        (min (count-those-with-least-eval unsorted-children)
+             (count-those-with-least-eval new-population)))]))
 
-(def pmi-update-frequency 10) ; Mutation probability will be updated every % generations
+(defn print-top-5-evaluations [generation population]
+  "Print the generation number and  top 5 evaluations in the population"
+  ; The only function with side effects
+                                        ; Leaving up to the user to add e.g. (format "%.3f" %) in between
+  (println (str "Generation: " generation "; Top 5 evaluations: "
+                (clojure.string/join ", " (take 5 (map last population))))))
+
+(def pmi-update-frequency 10)
+; Mutation probability will be updated every % generations
+; It's a result of the author's experience, but the user may decide alter it
 
 (defn the-main-loop
 "The main clogann loop, called once from main, infinite"
