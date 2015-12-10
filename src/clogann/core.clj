@@ -6,8 +6,7 @@
 
 ; These will be taken from the 'population.clj' file...
 (declare initial-vector take-next-sample calculate-final-evaluation params population)
-
-; ... here:
+; ...here:
 (defn load-population
 "Reads the population from file, and defines parameters"
 []
@@ -80,6 +79,12 @@
  (write "; The population itself; made of vectors [organism evaluation]\n")
  (write (str "(def population " population ")"))]))
 
+(defn print-top-5-evaluations [generation population]
+"Print the generation number and  top 5 evaluations in the population"
+;Leaving up to the user to add e.g. (format "%.3f" %) in between
+  (println (str "Generation: " generation "; Top 5 evaluations: "
+                (clojure.string/join ", " (take 5 (map last population))))))
+
 (defn mul-vector-array
 "Multiply a transposed vector by a row-arranged array"
 [vector-transposed array-by-rows]
@@ -94,39 +99,79 @@
 
 ;TBC: sample evaluation here
 
-(defn evaluate-network
-"Evaluates a network and returns it with the updated evaluation"
-[organism] (assoc organism (dec (count organism)) default-null-eval))
+(defn evaluate-organism
+"Evaluates and returns an organism with updated evaluation"
+[organism] [(get organism 0) default-null-eval])
 ;TBC
 
 (defn calculate-evaluations
-"Calculate evaluations for a given population"
+"Calculate evaluations for a given population, with the given parallelism"
 ([population] (calculate-evaluations [] population))
 ([processed-vector remaining-vector]
  (if (empty? remaining-vector)
-   processed-vector
+   (into [] processed-vector)
    (recur (concat processed-vector
-                  (pmap evaluate-network (take parallelism remaining-vector)))
+                  (pmap evaluate-organism (take parallelism remaining-vector)))
           (drop parallelism remaining-vector)))))
 
+(defn crossover-networks
+"Returns a crossover of two networks with the crossover-probability"
+[net1 net2]
+(if (< (rand) crossover-probability) ; if actually crossing over
+  (let [cut-range (dec network-size) ; i.e. disregarding the last vector item
+        n-cut (rand-int cut-range) ; n-cut whole rows is taken from net1
+        v-cut (rand-int cut-range)] ; v-cut values is taken from the vector
+    (into [] (concat
+              (take n-cut net1)
+              [(into [] (concat (take v-cut (get net1 n-cut))
+                                 (drop v-cut (get net2 n-cut))))]
+              (drop (inc n-cut) net2))))
+  net1))
+
 (defn crossover
-"Applies crossing-over to a population"
+"Applies crossing-over to a population, resetting evaluations"
 [population]
-population)
-;TBC
+(reduce (fn [mutated-population organism]
+          (into mutated-population 
+                [[(crossover-networks
+                   (first organism) ; organism = [network evaluation]
+                   (first (get population (rand-int population-size))))
+                    ; i.e. it may happen that the network will crossover with itself; we don't care
+                  default-null-eval]]))
+        []
+        population))
+
+(defn coin-toss "false/true; p = 1/2" [] (= 0 (rand-int 2)))
+
+(defn mutate-value
+"Mutate a number with 1/pmi probability; it's inc, dec, /2, or *2"
+[number pmi]
+(if (< (rand) (/ 1 pmi))
+  (if (coin-toss)
+    (if (coin-toss) (inc number) (dec number))
+    (if (coin-toss) (/ number 2) (* number 2)))
+  number))
 
 (defn mutate
-"Enters random mutations to a population"
+"Enters random mutations to a population, resetting evaluations"
 [population pmi]
-population
-)
-;TBC
+(reduce (fn [mutated-population organism]
+          (into mutated-population 
+                [[(reduce (fn [mutated-network array-row]
+                             (into mutated-network
+                                   [(into [] (map #(mutate-value % pmi) array-row))]))
+                           []
+                           (first organism)) ; (first organism) is a network
+                   default-null-eval]]))
+        []
+        population))
 
 (defn breed-new-population
   "Takes a population, and breeds a new one; also informs about new organisms count"
   [population pmi]
   (let [unsorted-children (calculate-evaluations (mutate (crossover population) pmi))
-        new-population (take population-size (sort-by last > (concat unsorted-children population)))
+        new-population (into [] (take population-size
+                                      (sort-by last > (concat unsorted-children population))))
         ; as per the documentation, clojure.core/sort is 'conservative', or 'stable'
         ; i.e. children go first if evaluations are equal
         least-new-evaluation (last (last new-population))
@@ -136,13 +181,6 @@ population
      (+ (count (filter #(> (last %) least-new-evaluation) unsorted-children))
         (min (count-those-with-least-eval unsorted-children)
              (count-those-with-least-eval new-population)))]))
-
-(defn print-top-5-evaluations [generation population]
-  "Print the generation number and  top 5 evaluations in the population"
-  ; The only function with side effects
-                                        ; Leaving up to the user to add e.g. (format "%.3f" %) in between
-  (println (str "Generation: " generation "; Top 5 evaluations: "
-                (clojure.string/join ", " (take 5 (map last population))))))
 
 (def pmi-update-frequency 10)
 ; Mutation probability will be updated every % generations
@@ -171,8 +209,7 @@ population
        (if (> accu-new-org-count population-size) ; if too many new organisms created in the meantime,
          (max (dec current-pmi) 5) ; increase mutation probability (i.e. dec inverse), but not above 1/5
          (inc current-pmi)) ; otherwise decrease the mutation probability (i.e. inc inverse)
-       current-pmi)
-     new-population ; take the new population for the next main loop iteration
+       current-pmi)     new-population ; take the new population for the next main loop iteration
      (if update-pmi? ; if the accu-new-org-count has been "consumed" above, start building a new one
        new-org-count
        (+ new-org-count accu-new-org-count))))))
