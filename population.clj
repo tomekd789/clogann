@@ -21,7 +21,7 @@
 ; ( https://en.wikipedia.org/wiki/Recurrent_neural_network ). All neurons trigger together, so we can talk
 ; about a network state at a given time. Algebraically, and by implementation, this is an iterative multiplication
 ; of a network state vector (transposed) by a square array of weights (row-oriented), and substituting
-; all negative values by zeroes subsequently. It's up to the user to check for NaNa #(Double/isNaN %), or infinities.
+; all negative values by zeroes subsequently. It's up to the user to check for NaNs (#(Double/isNaN %)), or infinities.
 ;A SAMPLE
 ; A network can be also seen as a function processing its state vector iteractively, in the way described above.
 ; At the beginning, and then every 'iterations-per-input', the state vector is additionaly processed by
@@ -49,10 +49,8 @@
 ; - The pool is processed by a cross-over, with 'crossover-probability',
 ; - All its weights are then subject to a mutation, with (/ 1 mutation-probability-inverse) probability;
 ;   a mutation can be #(inc %), #(dec %), #(/ % 2), or #(* % 2) - all equally probable,
-; - All networks in the new pool are then evaluated, with use of 'pmap' parallelism. The degree
-;   of parallelism is defined as 'parallelism' (so it's mildly recommended to make the 'population-count'
-;   a multiply of the 'parallelism' for optimal performance). If 0 is provided then the JVM CPU count is taken,
-;   and then written explicitly to subsequent output files,
+; - All networks in the new pool are then evaluated, with use of 'map', or 'pmap' parallelism. This is controlled
+;   by the 'parallelism' parameter.
 ; - The extended population is then sorted by evaluations, descending (i.e. to maximize the
 ;   evaluation result), counter-conservative (i.e. new organisms are preferred), and 'population-size'
 ;   organisms are taken as the new population.
@@ -81,7 +79,7 @@
 
 ;DEFINITIONS
 ; For educational purposes this file defines a working example, breeding a network capable of factorizing
-; natural numbers, i.e. for a given k it returns m, n such that k = m*n. m and n do not have to be prime numbers.
+; natural numbers, i.e. for a given k it returns m, n such that k = m*n. m and n do not have to be prime.
 
 ; 'initial-vector': This is the initial value taken as an argument for 'take-next-sample' on the first run
 (def initial-vector [100]) ; In this particular example the vector contains just a decrementing counter
@@ -168,7 +166,7 @@
 :population-size '(50 "The population size; integer")
 :network-size '(6 "The network size; integer")
 :generation '(0 "Current generation; integer")
-:parallelism '(0 "# of organisms evaluated in parallel - if 0 then # of the JVM cores; integer")
+:parallelism '(true "True - with pmap; False - with map")
 })
 
 ; The population itself; made of vectors [organism evaluation]

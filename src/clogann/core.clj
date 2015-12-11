@@ -32,10 +32,7 @@
   (def generation
     (first (:generation params)))
   (def parallelism
-    (let [p (first (:parallelism params))]
-      (if (= p 0)
-        (.availableProcessors (Runtime/getRuntime))
-        p)))
+    (first (:parallelism params)))
   (def initial-population
     (if initialize-population
       ; Population filled with 0.0s, evaluations set to default-null-eval
@@ -74,7 +71,7 @@
  (write (str ":network-size '(" network-size " \"The network size; integer\")\n"))
  (write (str ":generation '(" generation " \"Current generation; integer\")\n"))
  (write (str ":parallelism '(" parallelism
-    " \"# of organisms evaluated in parallel - if 0 then # of the JVM cores; integer\")\n"))
+    " \"True - with pmap; False - with map\")\n"))
  (write "})\n\n")
  (write "; The population itself; made of vectors [organism evaluation]\n")
  (write (str "(def population " population ")"))]))
@@ -92,10 +89,15 @@
           #(reduce + (map * vector-transposed %)) 
           array-by-rows)))
 
+   (defn mul-vector-array-stub
+   "Version for debugging; identity on the vector"
+   [vector-transposed array-by-rows]
+   vector-transposed)
+
 (defn network-iteration
 "Change the state vector by a single network iteration"
 [network state-vector]
-(into [] (map #(max % 0.0) (mul-vector-array state-vector network))))
+(into [] (map #(max % 0.0) (mul-vector-array state-vector network)))) ;TBC
 
 (defn evaluate-sample
 "Evaluate a network with a single sample"
@@ -140,13 +142,8 @@
 
 (defn calculate-evaluations
 "Calculate evaluations for a given population, with the given parallelism"
-([population] (calculate-evaluations [] population))
-([processed-vector remaining-vector]
- (if (empty? remaining-vector)
-   (into [] processed-vector)
-   (recur (concat processed-vector
-                  (pmap evaluate-organism (take parallelism remaining-vector)))
-          (drop parallelism remaining-vector)))))
+[population]
+(into [] ((if parallelism pmap map) evaluate-organism population)))
 
 (defn crossover-networks
 "Returns a crossover of two networks with the crossover-probability"
@@ -221,11 +218,11 @@
 ; It's a result of the author's experience, but the user may decide alter it
 
 (defn the-main-loop
-"The main clogann loop, called once from main, infinite"
-; It breeds next populations iteratively.
-; Every population-save-interval the population is saved to a new file.
-; Every pmi-upgrade-frequency the mutation probability is upgraded,
-; based on the number of new organisms entering the population in the meantime.
+"The main clogann loop, called once from main, infinite
+It breeds next populations iteratively.
+Every population-save-interval the population is saved to a new file.
+Every pmi-upgrade-frequency the mutation probability is upgraded,
+based on the number of new organisms entering the population in the meantime."
 []
 (loop [current-generation generation
        current-pmi mutation-probability-inverse
