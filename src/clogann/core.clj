@@ -1,5 +1,5 @@
 ; See the 'population.clj' file for documentation.
-; Tomasz Dryjanski ( https://github.com/tomekd789 )
+; (c) Tomasz Dryjanski ( https://github.com/tomekd789 )
 
 (ns clogann.core
   (:gen-class))
@@ -94,15 +94,49 @@
 
 (defn network-iteration
 "Change the state vector by a single network iteration"
-[state-vector network]
+[network state-vector]
 (into [] (map #(max % 0.0) (mul-vector-array state-vector network))))
 
-;TBC: sample evaluation here
+(defn evaluate-sample
+"Evaluate a network with a single sample"
+[network
+ initial-provide-input-vector
+ provide-input
+ initial-interpret-output-vector
+ interpret-output]
+  (loop [input-vector initial-provide-input-vector
+         output-vector initial-interpret-output-vector
+         state-vector (into [] (take network-size (repeat 0.0)))]
+   (let [[state-vector-after-input updated-input-vector] (provide-input state-vector input-vector)
+         new-state-vector
+           (nth (iterate (partial network-iteration network) state-vector-after-input) iterations-per-input)
+         [flag updated-output-vector partial-evaluation] (interpret-output new-state-vector output-vector)]
+     (if flag
+       partial-evaluation
+       (recur updated-input-vector
+              updated-output-vector
+              new-state-vector)))))
 
-(defn evaluate-organism
+(defn evaluate-organism [[network evaluation]]
 "Evaluates and returns an organism with updated evaluation"
-[organism] [(get organism 0) default-null-eval])
-;TBC
+  (loop [user-vector initial-vector ; initial-vector is defined in population.clj
+        evaluates []] ; to accumulate partial evaluations when sampling
+    (let [[flag
+           updated-user-vector
+           initial-provide-input-vector
+           provide-input
+           initial-interpret-output-vector          
+           interpret-output] (take-next-sample user-vector)]
+    (if flag
+       [network (calculate-final-evaluation evaluates)]
+       (recur
+         updated-user-vector
+         (conj evaluates
+               (evaluate-sample network
+                                initial-provide-input-vector
+                                provide-input
+                                initial-interpret-output-vector
+                                interpret-output)))))))
 
 (defn calculate-evaluations
 "Calculate evaluations for a given population, with the given parallelism"

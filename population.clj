@@ -21,7 +21,7 @@
 ; ( https://en.wikipedia.org/wiki/Recurrent_neural_network ). All neurons trigger together, so we can talk
 ; about a network state at a given time. Algebraically, and by implementation, this is an iterative multiplication
 ; of a network state vector (transposed) by a square array of weights (row-oriented), and substituting
-; all negative values by zeroes subsequently.
+; all negative values by zeroes subsequently. It's up to the user to check for NaNa #(Double/isNaN %), or infinities.
 ;A SAMPLE
 ; A network can be also seen as a function processing its state vector iteractively, in the way described above.
 ; At the beginning, and then every 'iterations-per-input', the state vector is additionaly processed by
@@ -99,13 +99,17 @@
 ; I.e. it needs to have the following definition pattern:
 ; (defn take-next-sample
 ;  [user-vector]
-;  [flag updated-user-vector initial-provide-input-vector provide-input
-;    initial-interpret-output-vector interpret-output])
+;  [flag
+;   updated-user-vector
+;   initial-provide-input-vector
+;   provide-input
+;   initial-interpret-output-vector
+;   interpret-output])
 (defn take-next-sample
 "Generate the next sample to be evaluated by a NN"
   [user-vector]
   (let [sample-counter (get user-vector 0)
-        m (int (rand 50)) n (int (rand 50)) mn (* m n)
+        m (+ 2 (rand-int 50)) n (+ 2 (rand-int 50)) mn (* m n)
        ; Numbers to factorize, and their multiply. A new random pair is generated every sample.
         max-iterations 1000]
        ; This is how many network iterations we allow until we consider it unstoppable.
@@ -161,10 +165,10 @@
 :initialize-population '(true  "If true, a new, zeroed population will be created; boolean")
 :default-null-eval '(0.0 "Initial evaluation taken if initialize-population; double")
 :iterations-per-input '(1 "Network cycles per each value provided; integer")
-:population-size '(5 "The population size; integer")
-:network-size '(4 "The network size; integer")
+:population-size '(50 "The population size; integer")
+:network-size '(6 "The network size; integer")
 :generation '(0 "Current generation; integer")
-:parallelism '(4 "# of organisms evaluated in parallel - if 0 then # of the JVM cores; integer")
+:parallelism '(0 "# of organisms evaluated in parallel - if 0 then # of the JVM cores; integer")
 })
 
 ; The population itself; made of vectors [organism evaluation]
