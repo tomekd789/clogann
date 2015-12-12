@@ -1,7 +1,5 @@
 # clogann
 
-** This is yet a pre-release version, debugging **
-
 CloGANN: Clojure abstraction for breeding (Recurrent) Neural Networks (NN) with a Genetic Algorithm (GA).
 To be used for indirect programming by breeding neural networks capable of resolving user-defined problems.
 

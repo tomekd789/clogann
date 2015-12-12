@@ -160,7 +160,7 @@
 ;;; The mutable part
 (def params
 {
-:population-save-interval '(1 "New file is saved and evals displayed every % generation; integer")
+:population-save-interval '(10 "New file is saved and evals displayed every % generation; integer")
 :population-save-folder '("factorization/" "New files are saved to this folder")
 :mutation-probability-inverse '(12 "Self-adjustable. P of a weight modification when a new org is created; integer")
 :crossover-probability '(0.4 "...when a new organism is created; double")
