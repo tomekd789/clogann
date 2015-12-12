@@ -78,11 +78,11 @@
 
 
 ;DEFINITIONS
-; For educational purposes this file defines a working example, breeding a network capable of factorizing
+; For demonstrative purposes this file defines a working example, breeding a network capable of factorizing
 ; natural numbers, i.e. for a given k it returns m, n such that k = m*n. m and n do not have to be prime.
 
 ; 'initial-vector': This is the initial value taken as an argument for 'take-next-sample' on the first run
-(def initial-vector [100]) ; In this particular example the vector contains just a decrementing counter
+(def initial-vector [50]) ; In this particular example the vector contains just a decrementing counter
 
 ; 'take-next-sample': essentially it transforms the initial vector subsequently, also
 ; returning values necessary for a sample evaluation to work.
@@ -109,7 +109,7 @@
   (let [sample-counter (get user-vector 0)
         m (+ 2 (rand-int 50)) n (+ 2 (rand-int 50)) mn (* m n)
        ; Numbers to factorize, and their multiply. A new random pair is generated every sample.
-        max-iterations 1000]
+        max-iterations 500]
        ; This is how many network iterations we allow until we consider it unstoppable.
   [(= 0 sample-counter)   ; The flag; if sample-counter runs down to 0, sampling stops.
     [(dec sample-counter)] ; The updated user vector; In this case it's the counter decreased.
@@ -160,7 +160,7 @@
 ;;; The mutable part
 (def params
 {
-:population-save-interval '(10 "New file is saved and evals displayed every % generation; integer")
+:population-save-interval '(20 "New file is saved and evals displayed every % generation; integer")
 :population-save-folder '("factorization/" "New files are saved to this folder")
 :mutation-probability-inverse '(12 "Self-adjustable. P of a weight modification when a new org is created; integer")
 :crossover-probability '(0.4 "...when a new organism is created; double")
@@ -168,7 +168,7 @@
 :default-null-eval '(0.0 "Initial evaluation taken if initialize-population; double")
 :iterations-per-input '(1 "Network cycles per each value provided; integer")
 :population-size '(50 "The population size; integer")
-:network-size '(6 "The network size; integer")
+:network-size '(7 "The network size; integer")
 :generation '(0 "Current generation; integer")
 :parallelism '(true "True - with pmap; False - with map")
 })

@@ -89,15 +89,15 @@
           #(reduce + (map * vector-transposed %)) 
           array-by-rows)))
 
-   (defn mul-vector-array-stub
-   "Version for debugging; identity on the vector"
-   [vector-transposed array-by-rows]
-   vector-transposed)
+;; (defn mul-vector-array-stub
+;; "Version for debugging; identity on the vector"
+;; [vector-transposed array-by-rows]
+;; vector-transposed)
 
 (defn network-iteration
 "Change the state vector by a single network iteration"
 [network state-vector]
-(into [] (map #(max % 0.0) (mul-vector-array state-vector network)))) ;TBC
+(into [] (map #(max % 0.0) (mul-vector-array state-vector network))))
 
 (defn evaluate-sample
 "Evaluate a network with a single sample"
@@ -240,7 +240,8 @@ based on the number of new organisms entering the population in the meantime."
        (if (> accu-new-org-count population-size) ; if too many new organisms created in the meantime,
          (max (dec current-pmi) 5) ; increase mutation probability (i.e. dec inverse), but not above 1/5
          (inc current-pmi)) ; otherwise decrease the mutation probability (i.e. inc inverse)
-       current-pmi)     new-population ; take the new population for the next main loop iteration
+       current-pmi)
+     new-population ; take the new population for the next main loop iteration
      (if update-pmi? ; if the accu-new-org-count has been "consumed" above, start building a new one
        new-org-count
        (+ new-org-count accu-new-org-count))))))
