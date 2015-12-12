@@ -121,10 +121,14 @@
     (fn [state-vector user-vector] ; The interpret-output function
         (let [iterations-left (get user-vector 0)
              [a b] (take-last 2 state-vector) ; Take the two last neurons' output as the NN output
-             factorization-found (= (* (int a) (int b)) mn)] ; true if a*b = mn
-           [(or (= iterations-left 0) factorization-found)
+             terminate? (and (> a 0.0) (> b 0.0)) ; If both outputs are positive, terminating
+             factorization-found? (and (< a mn) (< b mn) (= (* (int a) (int b)) mn))]
+                ; true if a < mn, b < mn, and a*b = mn; the first two conditions also protect against
+                ; going out of int range (because 'and' stops evaluating before the cast)
+           [(or (= iterations-left 0) terminate?)
              [(dec iterations-left)]
-             (if factorization-found 1.0 0.0)]))])) ; The partial evaluation; 1.0 if solution found.
+             (if factorization-found? 1.0 (if terminate? 0.1 0.0))]))]))
+                ; The partial evaluation; 1.0 if solution found, 0.1 if terminated by positive output
 
 ; 'calculate-final-evaluation': this function takes a list of partial evaluations (any type),
 ; and returns a 'double' type numeric value, interpreted as the final network evaluation.
@@ -156,7 +160,7 @@
 ;;; The mutable part
 (def params
 {
-:population-save-interval '(10 "New file is saved and evals displayed every % generation; integer")
+:population-save-interval '(1 "New file is saved and evals displayed every % generation; integer")
 :population-save-folder '("factorization/" "New files are saved to this folder")
 :mutation-probability-inverse '(12 "Self-adjustable. P of a weight modification when a new org is created; integer")
 :crossover-probability '(0.4 "...when a new organism is created; double")
