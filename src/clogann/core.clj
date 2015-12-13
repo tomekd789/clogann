@@ -11,31 +11,20 @@
 "Reads the population from file, and defines parameters"
 []
   (load-file "population.clj")
-  (def population-save-interval
-    (first (:population-save-interval params)))
-  (def population-save-folder
-    (first (:population-save-folder params)))
-  (def mutation-probability-inverse
-    (first (:mutation-probability-inverse params)))
-  (def crossover-probability
-    (first (:crossover-probability params)))
-  (def initialize-population
-    (first (:initialize-population params)))
-  (def default-null-eval
-    (first (:default-null-eval params)))
-  (def iterations-per-input
-    (first (:iterations-per-input params)))
-  (def population-size
-    (first (:population-size params)))
-  (def network-size
-    (first (:network-size params)))
-  (def generation
-    (first (:generation params)))
-  (def parallelism
-    (first (:parallelism params)))
+  (def population-save-interval     (first (:population-save-interval     params)))
+  (def population-save-folder       (first (:population-save-folder       params)))
+  (def mutation-probability-inverse (first (:mutation-probability-inverse params)))
+  (def crossover-probability        (first (:crossover-probability        params)))
+  (def initialize-population        (first (:initialize-population        params)))
+  (def default-null-eval            (first (:default-null-eval            params)))
+  (def iterations-per-input         (first (:iterations-per-input         params)))
+  (def population-size              (first (:population-size              params)))
+  (def network-size                 (first (:network-size                 params)))
+  (def generation                   (first (:generation                   params)))
+  (def parallelism                  (first (:parallelism                  params)))
   (def initial-population
     (if initialize-population
-      ; Population filled with 0.0s, evaluations set to default-null-eval
+      ; Population filled with 0.0s, evaluations set to default-null-eval:
       (into [] (take population-size (repeat [(into [] (take network-size
          (repeat (into [] (take network-size (repeat 0.0)))))) default-null-eval])))
       population))
@@ -53,27 +42,29 @@
  ; The subsequent body can be expressed more concisely using e.g. Pretty Print.
  ; It was consciously avoided to reduce dependencies, it's up to the user to do any refactoring.
  (write "(def params\n{\n")
- (write (str ":population-save-interval '(" population-save-interval
+ (write (str ":population-save-interval '("     population-save-interval
              " \"New file is saved and evals displayed every % generation; integer\")\n"))
- (write (str ":population-save-folder '(" population-save-folder
+ (write (str ":population-save-folder '(\""       population-save-folder "\""
              " \"New files are saved to this folder\")\n"))
  (write (str ":mutation-probability-inverse '(" mutation-probability-inverse
     " \"Self-adjustable. P. of a weight modification when a new org is created; integer\")\n"))
- (write (str ":crossover-probability '(" crossover-probability
+ (write (str ":crossover-probability '("        crossover-probability
              " \"...when a new org is created; double\")\n"))
  (write ":initialize-population '(false \"If true, a new, zeroed population will be created; boolean\")\n")
- (write (str ":default-null-eval '(" default-null-eval
+ (write (str ":default-null-eval '("            default-null-eval
              " \"Initial evaluation taken if initialize-population; double\")\n"))
- (write (str ":iterations-per-input '(" iterations-per-input
+ (write (str ":iterations-per-input '("         iterations-per-input
              " \"Network cycles per each value provided; integer\")\n"))
- (write (str ":population-size '(" population-size
+ (write (str ":population-size '("              population-size
              " \"The population size; integer\")\n"))
- (write (str ":network-size '(" network-size " \"The network size; integer\")\n"))
- (write (str ":generation '(" generation " \"Current generation; integer\")\n"))
- (write (str ":parallelism '(" parallelism
+ (write (str ":network-size '("                 network-size
+             " \"The network size; integer\")\n"))
+ (write (str ":generation '("                   generation
+             " \"Current generation; integer\")\n"))
+ (write (str ":parallelism '("                  parallelism
     " \"True - with pmap; False - with map\")\n"))
  (write "})\n\n")
- (write "; The population itself; made of vectors [organism evaluation]\n")
+ (write "; The population itself; made of vectors [network its-evaluation]\n")
  (write (str "(def population " population ")"))]))
 
 (defn print-top-5-evaluations [generation population]

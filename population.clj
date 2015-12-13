@@ -107,9 +107,9 @@
 "Generate the next sample to be evaluated by a NN"
   [user-vector]
   (let [sample-counter (get user-vector 0)
-        m (+ 2 (rand-int 50)) n (+ 2 (rand-int 50)) mn (* m n)
+        m (+ 2 (rand-int 6)) n (+ 2 (rand-int 5)) mn (* m n)
        ; Numbers to factorize, and their multiply. A new random pair is generated every sample.
-        max-iterations 500]
+        max-iterations 200]
        ; This is how many network iterations we allow until we consider it unstoppable.
   [(= 0 sample-counter)   ; The flag; if sample-counter runs down to 0, sampling stops.
     [(dec sample-counter)] ; The updated user vector; In this case it's the counter decreased.
@@ -128,7 +128,7 @@
            [(or (= iterations-left 0) terminate?)
              [(dec iterations-left)]
              (if factorization-found? 1.0 (if terminate? 0.1 0.0))]))]))
-                ; The partial evaluation; 1.0 if solution found, 0.1 if terminated by positive output
+                ; The partial evaluation: 1.0 if solution found, 0.1 if terminated by positive output
 
 ; 'calculate-final-evaluation': this function takes a list of partial evaluations (any type),
 ; and returns a 'double' type numeric value, interpreted as the final network evaluation.
@@ -144,6 +144,10 @@
 ;  - a 'network-size' vector of 'double' values, and
 ;  - a user-defined vector, intended to keep own state.
 ; Initially, the initial-provide-input-vector is taken as the user-vector.
+; A note: it may prove to be useful to provide (rand) to a selected neuron,
+; ( https://en.wikipedia.org/wiki/Boltzmann_machine )
+; and a constant value (aka "bias") to yet another
+; ( https://en.wikipedia.org/wiki/Artificial_neuron ).
 
 ; Description for the interpret-output function:
 ;- Interprets a portion of output data,
@@ -160,7 +164,7 @@
 ;;; The mutable part
 (def params
 {
-:population-save-interval '(20 "New file is saved and evals displayed every % generation; integer")
+:population-save-interval '(1000 "New file is saved and evals displayed every % generation; integer")
 :population-save-folder '("factorization/" "New files are saved to this folder")
 :mutation-probability-inverse '(12 "Self-adjustable. P of a weight modification when a new org is created; integer")
 :crossover-probability '(0.4 "...when a new organism is created; double")
@@ -168,10 +172,10 @@
 :default-null-eval '(0.0 "Initial evaluation taken if initialize-population; double")
 :iterations-per-input '(1 "Network cycles per each value provided; integer")
 :population-size '(50 "The population size; integer")
-:network-size '(7 "The network size; integer")
+:network-size '(9 "The network size; integer")
 :generation '(0 "Current generation; integer")
 :parallelism '(true "True - with pmap; False - with map")
 })
 
-; The population itself; made of vectors [organism evaluation]
+; The population itself; made of vectors [network its-evaluation]
 (def population [])
