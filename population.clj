@@ -1,9 +1,9 @@
-; CloGANN: Clojure abstraction for breeding (Recurrent) Neural Networks (NN) with the Genetic Algorithm (GA).
+; CloGANN: Clojure abstraction for breeding (Recurrent) Neural Networks (NN) with a Genetic Algorithm (GA).
 ;
 ;ABOUT THIS PARAMETER FILE
 ; The purpose of this file is fourfold: It contains a concise description of the project; Together with
 ; the core.clj file this is all what is needed for the program to run; It contains all necessary user-defined
-; paramaters; It creates own copies iteractively with updated values, hence becoming the program output.
+; paramaters; It creates own copies iteratively with updated values, hence becoming the program output.
 ;
 ;GENERAL DESCRIPTION
 ; This is a multi-layer abstraction for breeding recurrent neural networks capable of solving user-defined
@@ -12,7 +12,7 @@
 ; Here go the layers, bottom up:
 ;A NEURON
 ; A logical entity containing a vector of constant weights. It works by taking inputs from other neurons,
-; multiplying them by the weights respectively, summing the multiplies, and returning the result as its output.
+; multiplying them by the weights respectively, summing up the multiplies, and returning the result as its output.
 ; If the number is negative, the returned output is set to zero.
 ;A NEURAL NETWORK
 ; Also named just a /network/, this is a set of 'network-size' neurons (the 'network-size' parameter,
@@ -23,43 +23,43 @@
 ; of a network state vector (transposed) by a square array of weights (row-oriented), and substituting
 ; all negative values by zeroes subsequently. It's up to the user to check for NaNs (#(Double/isNaN %)), or infinities.
 ;A SAMPLE
-; A network can be also seen as a function processing its state vector iteractively, in the way described above.
+; A network can be also perceived as a function processing its state vector iteratively in the way described above.
 ; At the beginning, and then every 'iterations-per-input', the state vector is additionaly processed by
-; a user-defined function for providing input to the network. It just takes and returns the state vector, altered.
+; a user-defined function for providing input to the network. It just takes and returns the state vector altered.
 ; It is up to the user to decide how many neurons will be impacted, and how many times. Conceputally, this is
-; treating some neurons as input, i.e. disregarding network outputs for them and providing the user defined
-; value instead. Similarly, the state vector is then processed by another user-defined function to interpret
+; treating some neurons as input, i.e. disregarding inputs from the network, and providing a user defined
+; value instead. Similarly, the state vector is then processed by another user defined function to interpret
 ; the network output. It is expected to return a boolean flag interpreted as a stop signal, and an evaluation
 ; value. The described network run until stop is called a /sample/, and the return value is a /partial evaluation/.
 ;NETWORK EVALUATION
 ; A network can be sampled many times, returning many partial evaluations saved as a list. This is also controlled
-; by a user-defined 'take-next-sample' function capable of providing a higher level stop signal (this is not to be
-; confused with the stop signal for a sample, which is for the full, multiple-samples network evaluation).
-; Then the partial evaluations vector is taken as the argument for the user-defined 'calculate-final-evaluation'
+; by a user defined 'take-next-sample' function capable of providing a higher level stop signal (this is not to be
+; confused with the stop signal for a sample; This one here is for the full, multi-samples network evaluation).
+; Then the partial evaluations vector is taken as an argument for the user defined 'calculate-final-evaluation'
 ; function, returning a single value taken as the /network evaluation/.
 ;AN ORGANISM
-; A network paired with its evaluation as a vector, i.e. [network evaluation]
+; A network paired with its evaluation in a vector, i.e. [network evaluation]
 ;A POPULATION
 ; A population-size vector of organisms.
 ; If 'initialize-population' is 'true', the 'population' definition is disregarded, and a new 0.0-filled
 ; population is created, with evaluations initially set to 'default-null-eval'.
 ;THE GENETIC ALGORITHM
 ; Conceptually, core.clj works as follows:
-; - A new pool of organisms is created from the existing one (evaluations temporarily invalidate, and are disregarded),
+; - A new pool of organisms is created from an existing one (evaluations temporarily invalidate, and are disregarded),
 ; - The pool is processed by a cross-over, with 'crossover-probability',
-; - All its weights are then subject to a mutation, with (/ 1 mutation-probability-inverse) probability;
+; - All the weights are then subject to a mutation, with (/ 1 mutation-probability-inverse) probability;
 ;   a mutation can be #(inc %), #(dec %), #(/ % 2), or #(* % 2) - all equally probable,
-; - All networks in the new pool are then evaluated, with use of 'map', or 'pmap' parallelism. This is controlled
+; - All networks in the new pool are then evaluated, with use of 'map', or 'pmap'. This is controlled
 ;   by the 'parallelism' parameter.
 ; - The extended population is then sorted by evaluations, descending (i.e. to maximize the
-;   evaluation result), counter-conservative (i.e. new organisms are preferred), and 'population-size'
+;   evaluation result in the population), counter-conservative (i.e. new organisms are preferred), and 'population-size'
 ;   organisms are taken as the new population.
 ;   The Genetic Algorithm (GA) described here tends to _maximize_ the evaluation function value.
 ;THE PROGRAM
 ; Every 'population-save-interval'-th generation, the population is saved to a new file,
 ; with the name indexed by the generation number. User can assume that this is the only side effect
-; introduced by core.clj. User needs to be aware of usage of 'pmap', e.g. no interaction
-; is expected to happen between networks when they are evaluated, and one needs to be careful
+; introduced by core.clj. User needs to be aware of the usage of 'pmap', e.g. no interaction
+; is expected to happen between networks on their evaluation, and one needs to be careful
 ; with any side effects, resulting e.g. in locks.
 ; The 'mutation-probability-inverse' is updated every 'pmi-update-frequency' generation
 ; (this parameter is defined, exceptionally, in core.clj, and originally set to 10) so that the population
@@ -73,13 +73,13 @@
 ; The 'population.clj' file consists of two sections:
 ; - The first one goes from the top since the '';;; The mutable part'' line, and is copied without any changes.
 ;   It must contain necessary definitions for core.clj.
-; - The second part is a snapshot dump of all parameters (some of them alter), and the population itself
+; - The second part is a snapshot dump of all parameters (some of them alter), and the population itself.
 
 
 
 ;DEFINITIONS
 ; For demonstrative purposes this file defines a working example, breeding a network capable of factorizing
-; natural numbers, i.e. for a given k it returns m, n such that k = m*n. m and n do not have to be prime.
+; natural numbers, i.e. for a given k to return m, n such that k = m*n. m and n do not have to be prime.
 
 ; 'initial-vector': This is the initial value taken as an argument for 'take-next-sample' on the first run
 (def initial-vector [50]) ; In this particular example the vector contains just a decrementing counter
@@ -87,12 +87,12 @@
 ; 'take-next-sample': essentially it transforms the initial vector subsequently, also
 ; returning values necessary for a sample evaluation to work.
 ; Its parameter is a user-defined vector; initially the 'initial-vector' is taken.
-; The function has to return a vector consisted of the following:
-; - A boolean flag value; If true, samples generation stops, and final evaluation is calculated.
-; - A vector; it will be taken as the input value on the next sample generation, i.e. iterated.
+; The function has to return a vector consisting of the following:
+; - A boolean flag value; If true, samples generation stops, and the final evaluation is calculated.
+; - A vector; It will be taken as the input value on the next sample generation, i.e. iterated.
 ; - A vector; It is taken as the initial parameter for the following sample function:
 ; - A function; It is used for providing subsequent values to the NN. Described in detail later.
-; - A vector; It is taken as the initial parameter for the following sample function.
+; - A vector; It is taken as the initial parameter for the following sample function:
 ; - A function; It is used to interpret subsequent NN outputs. Described in detail later.
 ; I.e. it needs to have the following definition pattern:
 ; (defn take-next-sample
@@ -116,7 +116,7 @@
     [mn] ; The initial vector to be supplied to the provide-input function; The number to factorize.
     (fn [state-vector user-vector] ; The provide-input function
         [(assoc state-vector 0 mn) ; Replace first number in the network state-vector with m*n
-        [0.0]])  ; subsequently, zeros are provided, i.e. the input value is provided only once
+        [0.0]])  ; subsequently, zeroes are provided, i.e. the input value is provided only once
     [max-iterations]; The initial vector for the interpret-output function; just a safeguard counter
     (fn [state-vector user-vector] ; The interpret-output function
         (let [iterations-left (get user-vector 0)
@@ -166,7 +166,7 @@
 {
 :population-save-interval '(1000 "New file is saved and evals displayed every % generation; integer")
 :population-save-folder '("factorization/" "New files are saved to this folder")
-:mutation-probability-inverse '(12 "Self-adjustable. P of a weight modification when a new org is created; integer")
+:mutation-probability-inverse '(12 "Self-adjustable. 1/P of a weight modification when a new org is created; integer")
 :crossover-probability '(0.4 "...when a new organism is created; double")
 :initialize-population '(true  "If true, a new, zeroed population will be created; boolean")
 :default-null-eval '(0.0 "Initial evaluation taken if initialize-population; double")

@@ -47,7 +47,7 @@
  (write (str ":population-save-folder '(\""       population-save-folder "\""
              " \"New files are saved to this folder\")\n"))
  (write (str ":mutation-probability-inverse '(" mutation-probability-inverse
-    " \"Self-adjustable. P. of a weight modification when a new org is created; integer\")\n"))
+    " \"Self-adjustable. 1/P of a weight modification when a new org is created; integer\")\n"))
  (write (str ":crossover-probability '("        crossover-probability
              " \"...when a new org is created; double\")\n"))
  (write ":initialize-population '(false \"If true, a new, zeroed population will be created; boolean\")\n")
