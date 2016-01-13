@@ -1,0 +1,15 @@
+This is clogann application to a "false-coin-toss" problem. For a clogann project description see the root clogann folder.
+The problem is defined as follows: we ask a person to generate a series of "coin tosses" (i.e. "random" heads and tails) from one's head, with no real coin used, nor any device. Then we breed a NN optimizing it to guess the next item in the sequence based on previous values.
+
+The result is contained in the following files:
+coin-tosses.dat: the "human pseudorandom" sequence of 1000 choices, with the following stats:
+491 1s (509 0s),
+65.3% in case of the "just take the opposite of the previous toss" algorithm,
+70% guessed by the breeded network after 3000 generations:
+population_3000-human.clj.
+
+coin-tosses-clojure-rand.dat: 1000 tosses generated as (< 0.5 (rand)), with the following stats:
+473 1s (527 0s),
+57.2% in case of the "just take the opposite of the previous toss" algorithm,
+58% guessed by the breeded network after 3000 generations:
+population_3000-machine.clj.
